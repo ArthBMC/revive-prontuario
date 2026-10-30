@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prontuários Médicos - Gestão de Pacientes</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #1e293b;
+            color: #fff;
+            text-align: center;
+            border-radius: 12px;
+            padding: 16px;
+            position: fixed;
+            z-index: 100;
+            right: 30px;
+            bottom: 30px;
+            font-size: 14px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+        .toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">Ação realizada com sucesso!</div>
+
+    <!-- Top Header -->
+    <header class="bg-slate-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-file-medical text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Prontuários Médicos</h1>
+                    <p class="text-xs text-slate-400">Gestão de Pacientes e Hospitais</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <span id="sync-status" class="text-xs px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full font-medium flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Conectando ao Banco...
+                </span>
+                <button onclick="carregarExemplos()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-4 py-2.5 rounded-lg border border-slate-700 transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-database text-blue-400"></i> Carregar Exemplos
+                </button>
+                <button onclick="exportarDados()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-4 py-2.5 rounded-lg border border-slate-700 transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-file-arrow-down text-emerald-400"></i> Exportar Dados
+                </button>
+                <button onclick="abrirModalPaciente()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow-md shadow-blue-600/20">
+                    <i class="fa-solid fa-plus"></i> Novo Paciente
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- Search Filters Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2 text-slate-700 font-semibold">
+                    <i class="fa-solid fa-filter text-blue-600"></i>
+                    <h2>Filtros de Pesquisa</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="contador-pacientes" class="text-xs text-slate-500 font-medium">Mostrando 0 de 0 pacientes</span>
+                    <button onclick="limparFiltros()" class="text-xs text-blue-600 hover:text-blue-800 font-medium transition">Limpar Filtros</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1.5">Nome do Paciente</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+                        <input type="text" id="filtro-nome" oninput="filtrarPacientes()" placeholder="Buscar por nome..." class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1.5">Consultor Responsável</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user-tie absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+                        <input type="text" id="filtro-consultor" oninput="filtrarPacientes()" placeholder="Nome do consultor..." class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1.5">CPF do Paciente</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-id-card absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+                        <input type="text" id="filtro-cpf" oninput="filtrarPacientes()" placeholder="000.000.000-00" class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1.5">Hospital Atendido</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-hospital absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+                        <input type="text" id="filtro-hospital" oninput="filtrarPacientes()" placeholder="Nome do hospital..." class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1.5">Status</label>
+                    <select id="filtro-status" onchange="filtrarPacientes()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        <option value="">Todos</option>
+                        <option value="Pendente">Pendente</option>
+                        <option value="Em Análise">Em Análise</option>
+                        <option value="Concluído">Concluído</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Card -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/70 border-b border-slate-200 text-slate-500 text-[11px] font-semibold tracking-wider uppercase">
+                            <th class="py-4 px-6">Paciente</th>
+                            <th class="py-4 px-4">CPF / Contato</th>
+                            <th class="py-4 px-4">Consultor</th>
+                            <th class="py-4 px-4">Hospital</th>
+                            <th class="py-4 px-4">Status</th>
+                            <th class="py-4 px-4">Data Prev. Chegada</th>
+                            <th class="py-4 px-4">Prontuários / Anexos</th>
+                            <th class="py-4 px-6 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-corpo" class="divide-y divide-slate-100 text-xs">
+                        <!-- Dynamic rows -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="estado-vazio" class="py-16 text-center hidden">
+                <div class="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fa-solid fa-users text-lg"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-700 mb-1">Nenhum paciente encontrado</h3>
+                <p class="text-xs text-slate-400 mb-4">Tente ajustar seus filtros de busca ou cadastre um novo paciente.</p>
+                <button onclick="abrirModalPaciente()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition inline-flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Cadastrar Paciente
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Novo/Editar Paciente -->
+    <div id="modal-paciente" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+                <h3 id="modal-titulo" class="font-bold text-sm">Cadastrar Novo Paciente</h3>
+                <button onclick="fecharModalPaciente()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-paciente" onsubmit="salvarPaciente(event)" class="p-6 space-y-4">
+                <input type="hidden" id="paciente-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nome do Paciente *</label>
+                    <input type="text" id="inp-nome" required placeholder="Ex: Maria Oliveira" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">CPF *</label>
+                        <input type="text" id="inp-cpf" required placeholder="000.000.000-00" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Contato / Telefone</label>
+                        <input type="text" id="inp-contato" placeholder="(00) 90000-0000" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Consultor Responsável *</label>
+                        <input type="text" id="inp-consultor" required placeholder="Nome do consultor" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Hospital Atendido *</label>
+                        <input type="text" id="inp-hospital" required placeholder="Nome do hospital" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+                        <select id="inp-status" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                            <option value="Pendente">Pendente</option>
+                            <option value="Em Análise">Em Análise</option>
+                            <option value="Concluído">Concluído</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Data Prev. de Chegada</label>
+                        <input type="date" id="inp-data-prevista" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Prontuários / Observações / Anexos</label>
+                    <textarea id="inp-prontuarios" rows="3" placeholder="Detalhes ou links dos prontuários..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Anexar Ficha / Relatório (PDF ou Imagem)</label>
+                    <input type="file" id="inp-arquivo" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+                <div class="flex justify-end gap-3 pt-3">
+                    <button type="button" onclick="fecharModalPaciente()" class="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 transition">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-500 transition shadow-md shadow-blue-600/20">Salvar no Banco</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Anexos do Paciente -->
+    <div id="modal-anexos" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+                <div>
+                    <h3 id="modal-anexos-titulo" class="font-bold text-sm">Anexos do Paciente</h3>
+                    <p id="modal-anexos-subtitulo" class="text-xs text-slate-400"></p>
+                </div>
+                <button onclick="fecharModalAnexos()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="anexos-paciente-id">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <label class="block text-xs font-semibold text-slate-700 mb-2">Adicionar Novo Relatório/Ficha</label>
+                    <div class="flex gap-2">
+                        <input type="file" id="inp-novo-anexo" class="flex-1 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
+                        <button type="button" onclick="enviarAnexoModal()" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-500 transition">Enviar</button>
+                    </div>
+                </div>
+                <div id="lista-anexos-container" class="space-y-2 max-h-60 overflow-y-auto">
+                    <!-- Preenchido dinamicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Exclusão -->
+    <div id="modal-excluir" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center border border-slate-200">
+            <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+            </div>
+            <h3 class="font-bold text-sm text-slate-800 mb-1">Excluir Paciente</h3>
+            <p class="text-xs text-slate-500 mb-5">Tem certeza de que deseja remover este registo do banco de dados?</p>
+            <input type="hidden" id="excluir-id">
+            <div class="flex gap-3">
+                <button onclick="fecharModalExcluir()" class="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 transition">Cancelar</button>
+                <button onclick="confirmarExclusao()" class="flex-1 px-4 py-2.5 bg-rose-600 text-white rounded-xl text-xs font-semibold hover:bg-rose-500 transition shadow-md shadow-rose-600/20">Sim, Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de Integração com Banco Local SQLite (REST API) -->
+    <script>
+        let pacientes = [];
+        let pacienteSelecionadoParaAnexos = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            conectarBanco();
+        });
+
+        async function conectarBanco() {
+            const syncStatus = document.getElementById("sync-status");
+            try {
+                const res = await fetch("/api/status");
+                const data = await res.json();
+                if (data.status === "online") {
+                    syncStatus.className = "text-xs px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full font-medium flex items-center gap-1.5";
+                    syncStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> SQLite Local Ativo';
+                }
+                await carregarPacientes();
+            } catch (error) {
+                console.error("Erro na conexão com SQLite:", error);
+                syncStatus.className = "text-xs px-3 py-1 bg-rose-500/20 text-rose-400 rounded-full font-medium flex items-center gap-1.5";
+                syncStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400"></span> Servidor Offline';
+            }
+        }
+
+        async function carregarPacientes() {
+            try {
+                const res = await fetch("/api/pacientes");
+                pacientes = await res.json();
+                renderizarTabela(pacientes);
+            } catch (error) {
+                console.error("Erro ao carregar pacientes:", error);
+                mostrarToast("Erro ao carregar dados do banco!");
+            }
+        }
+
+        function mostrarToast(mensagem) {
+            const toast = document.getElementById("toast");
+            toast.textContent = mensagem;
+            toast.className = "toast show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        function renderizarTabela(lista) {
+            const tbody = document.getElementById("tabela-corpo");
+            const estadoVazio = document.getElementById("estado-vazio");
+            const contador = document.getElementById("contador-pacientes");
+            
+            tbody.innerHTML = "";
+            contador.textContent = `Mostrando ${lista.length} de ${pacientes.length} pacientes`;
+
+            if (lista.length === 0) {
+                estadoVazio.classList.remove("hidden");
+                return;
+            } else {
+                estadoVazio.classList.add("hidden");
+            }
+
+            lista.forEach(p => {
+                let badgeClass = "bg-amber-500/10 text-amber-600 border-amber-500/20";
+                if (p.status === "Concluído") badgeClass = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+                if (p.status === "Em Análise") badgeClass = "bg-blue-500/10 text-blue-600 border-blue-500/20";
+                if (p.status === "Cancelado") badgeClass = "bg-rose-500/10 text-rose-600 border-rose-500/20";
+
+                let dataFormatada = "-";
+                if (p.dataPrevista) {
+                    const partes = p.dataPrevista.split('-');
+                    if (partes.length === 3) dataFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                }
+
+                const totalAnexos = p.total_anexos || 0;
+                const anexoBadge = totalAnexos > 0
+                    ? `<button onclick="abrirModalAnexos(${p.id}, '${p.nome.replace(/'/g, "\\'")}')" class="inline-flex items-center gap-1.5 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-semibold rounded-lg border border-blue-200 transition"><i class="fa-solid fa-paperclip"></i> ${totalAnexos} arquivo(s)</button>`
+                    : `<button onclick="abrirModalAnexos(${p.id}, '${p.nome.replace(/'/g, "\\'")}')" class="inline-flex items-center gap-1 px-2 py-1 text-slate-400 hover:text-blue-600 text-[11px] rounded transition"><i class="fa-solid fa-plus"></i> Anexar</button>`;
+
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-50/80 transition border-b border-slate-100 last:border-none";
+                tr.innerHTML = `
+                    <td class="py-4 px-6 font-semibold text-slate-800">${p.nome}</td>
+                    <td class="py-4 px-4 text-slate-600">
+                        <div class="font-medium">${p.cpf}</div>
+                        <div class="text-[10px] text-slate-400">${p.contato || 'Sem contato'}</div>
+                    </td>
+                    <td class="py-4 px-4 text-slate-600">${p.consultor}</td>
+                    <td class="py-4 px-4 text-slate-600">${p.hospital}</td>
+                    <td class="py-4 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${badgeClass}">${p.status}</span>
+                    </td>
+                    <td class="py-4 px-4 font-medium text-slate-700">${dataFormatada}</td>
+                    <td class="py-4 px-4 text-slate-600">
+                        <div class="truncate max-w-xs text-xs mb-1">${p.prontuarios || 'Sem anotações'}</div>
+                        <div>${anexoBadge}</div>
+                    </td>
+                    <td class="py-4 px-6 text-right space-x-2">
+                        <button onclick="editarPaciente(${p.id})" class="text-slate-400 hover:text-blue-600 transition p-1" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button onclick="abrirModalExcluir(${p.id})" class="text-slate-400 hover:text-rose-600 transition p-1" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filtrarPacientes() {
+            const nome = document.getElementById("filtro-nome").value.toLowerCase();
+            const consultor = document.getElementById("filtro-consultor").value.toLowerCase();
+            const cpf = document.getElementById("filtro-cpf").value.toLowerCase();
+            const hospital = document.getElementById("filtro-hospital").value.toLowerCase();
+            const status = document.getElementById("filtro-status").value;
+
+            const filtrados = pacientes.filter(p => {
+                return (
+                    (p.nome || '').toLowerCase().includes(nome) &&
+                    (p.consultor || '').toLowerCase().includes(consultor) &&
+                    (p.cpf || '').toLowerCase().includes(cpf) &&
+                    (p.hospital || '').toLowerCase().includes(hospital) &&
+                    (status === "" || p.status === status)
+                );
+            });
+            renderizarTabela(filtrados);
+        }
+
+        function limparFiltros() {
+            document.getElementById("filtro-nome").value = "";
+            document.getElementById("filtro-consultor").value = "";
+            document.getElementById("filtro-cpf").value = "";
+            document.getElementById("filtro-hospital").value = "";
+            document.getElementById("filtro-status").value = "";
+            renderizarTabela(pacientes);
+        }
+
+        function abrirModalPaciente(id = null) {
+            document.getElementById("modal-paciente").classList.remove("hidden");
+            document.getElementById("inp-arquivo").value = "";
+            if (id) {
+                document.getElementById("modal-titulo").textContent = "Editar Paciente";
+                const p = pacientes.find(item => item.id == id);
+                if (p) {
+                    document.getElementById("paciente-id").value = p.id;
+                    document.getElementById("inp-nome").value = p.nome || "";
+                    document.getElementById("inp-cpf").value = p.cpf || "";
+                    document.getElementById("inp-contato").value = p.contato || "";
+                    document.getElementById("inp-consultor").value = p.consultor || "";
+                    document.getElementById("inp-hospital").value = p.hospital || "";
+                    document.getElementById("inp-status").value = p.status || "Pendente";
+                    document.getElementById("inp-data-prevista").value = p.dataPrevista || "";
+                    document.getElementById("inp-prontuarios").value = p.prontuarios || "";
+                }
+            } else {
+                document.getElementById("modal-titulo").textContent = "Cadastrar Novo Paciente";
+                document.getElementById("form-paciente").reset();
+                document.getElementById("paciente-id").value = "";
+            }
+        }
+
+        function fecharModalPaciente() {
+            document.getElementById("modal-paciente").classList.add("hidden");
+        }
+
+        async function salvarPaciente(e) {
+            e.preventDefault();
+            const id = document.getElementById("paciente-id").value;
+            const dadosForm = {
+                nome: document.getElementById("inp-nome").value,
+                cpf: document.getElementById("inp-cpf").value,
+                contato: document.getElementById("inp-contato").value,
+                consultor: document.getElementById("inp-consultor").value,
+                hospital: document.getElementById("inp-hospital").value,
+                status: document.getElementById("inp-status").value,
+                dataPrevista: document.getElementById("inp-data-prevista").value,
+                prontuarios: document.getElementById("inp-prontuarios").value
+            };
+
+            try {
+                let pacienteSalvo;
+                if (id) {
+                    const res = await fetch(`/api/pacientes/${id}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(dadosForm)
+                    });
+                    pacienteSalvo = await res.json();
+                    mostrarToast("Paciente atualizado no SQLite!");
+                } else {
+                    const res = await fetch("/api/pacientes", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(dadosForm)
+                    });
+                    pacienteSalvo = await res.json();
+                    mostrarToast("Paciente cadastrado no SQLite!");
+                }
+
+                // Envio de arquivo em anexo se selecionado
+                const arquivoInput = document.getElementById("inp-arquivo");
+                if (arquivoInput.files.length > 0 && pacienteSalvo.id) {
+                    const formData = new FormData();
+                    formData.append("arquivo", arquivoInput.files[0]);
+                    await fetch(`/api/pacientes/${pacienteSalvo.id}/anexos`, {
+                        method: "POST",
+                        body: formData
+                    });
+                    mostrarToast("Arquivo anexado com sucesso!");
+                }
+
+                fecharModalPaciente();
+                await carregarPacientes();
+            } catch (error) {
+                console.error("Erro ao salvar:", error);
+                mostrarToast("Erro ao salvar no banco!");
+            }
+        }
+
+        function editarPaciente(id) {
+            abrirModalPaciente(id);
+        }
+
+        function abrirModalExcluir(id) {
+            document.getElementById("excluir-id").value = id;
+            document.getElementById("modal-excluir").classList.remove("hidden");
+        }
+
+        function fecharModalExcluir() {
+            document.getElementById("modal-excluir").classList.add("hidden");
+        }
+
+        async function confirmarExclusao() {
+            const id = document.getElementById("excluir-id").value;
+            try {
+                await fetch(`/api/pacientes/${id}`, { method: "DELETE" });
+                fecharModalExcluir();
+                mostrarToast("Paciente removido do SQLite!");
+                await carregarPacientes();
+            } catch (error) {
+                console.error("Erro ao excluir:", error);
+                mostrarToast("Erro ao excluir do banco!");
+            }
+        }
+
+        // Gestão de Anexos
+        async function abrirModalAnexos(pacienteId, pacienteNome) {
+            pacienteSelecionadoParaAnexos = pacienteId;
+            document.getElementById("anexos-paciente-id").value = pacienteId;
+            document.getElementById("modal-anexos-titulo").textContent = "Anexos e Relatórios";
+            document.getElementById("modal-anexos-subtitulo").textContent = `Paciente: ${pacienteNome}`;
+            document.getElementById("modal-anexos").classList.remove("hidden");
+            await atualizarListaAnexos(pacienteId);
+        }
+
+        function fecharModalAnexos() {
+            document.getElementById("modal-anexos").classList.add("hidden");
+            pacienteSelecionadoParaAnexos = null;
+        }
+
+        async function atualizarListaAnexos(pacienteId) {
+            const container = document.getElementById("lista-anexos-container");
+            container.innerHTML = '<p class="text-xs text-slate-400">Carregando anexos...</p>';
+            try {
+                const res = await fetch(`/api/pacientes/${pacienteId}`);
+                const data = await res.json();
+                const anexos = data.anexos || [];
+
+                if (anexos.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Nenhum arquivo anexado para este paciente.</p>';
+                    return;
+                }
+
+                container.innerHTML = "";
+                anexos.forEach(a => {
+                    const relativePath = a.caminho_arquivo.replace(/.*[\/\\]uploads[\/\\]/, "/uploads/");
+                    const item = document.createElement("div");
+                    item.className = "flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs";
+                    item.innerHTML = `
+                        <div class="flex items-center gap-2 truncate">
+                            <i class="fa-solid fa-file-pdf text-rose-500"></i>
+                            <a href="${relativePath}" target="_blank" class="font-medium text-slate-700 hover:text-blue-600 truncate underline" title="${a.nome_original}">${a.nome_original}</a>
+                            <span class="text-[10px] text-slate-400">(${(a.tamanho_bytes / 1024).toFixed(1)} KB)</span>
+                        </div>
+                        <button onclick="removerAnexo(${a.id})" class="text-slate-400 hover:text-rose-600 transition p-1" title="Excluir Anexo">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
+                    `;
+                    container.appendChild(item);
+                });
+            } catch (err) {
+                container.innerHTML = '<p class="text-xs text-rose-500">Erro ao carregar anexos.</p>';
+            }
+        }
+
+        async function enviarAnexoModal() {
+            const fileInput = document.getElementById("inp-novo-anexo");
+            if (!fileInput.files.length) {
+                mostrarToast("Selecione um arquivo para enviar!");
+                return;
+            }
+            const formData = new FormData();
+            formData.append("arquivo", fileInput.files[0]);
+
+            try {
+                const res = await fetch(`/api/pacientes/${pacienteSelecionadoParaAnexos}/anexos`, {
+                    method: "POST",
+                    body: formData
+                });
+                if (res.ok) {
+                    fileInput.value = "";
+                    mostrarToast("Arquivo anexado!");
+                    await atualizarListaAnexos(pacienteSelecionadoParaAnexos);
+                    await carregarPacientes();
+                } else {
+                    mostrarToast("Falha no upload do arquivo");
+                }
+            } catch (err) {
+                mostrarToast("Erro ao enviar anexo");
+            }
+        }
+
+        async function removerAnexo(anexoId) {
+            try {
+                const res = await fetch(`/api/anexos/${anexoId}`, { method: "DELETE" });
+                if (res.ok) {
+                    mostrarToast("Anexo excluído!");
+                    await atualizarListaAnexos(pacienteSelecionadoParaAnexos);
+                    await carregarPacientes();
+                }
+            } catch (err) {
+                mostrarToast("Erro ao excluir anexo");
+            }
+        }
+
+        async function carregarExemplos() {
+            const exemplos = [
+                {
+                    nome: 'Carlos Eduardo Silva',
+                    cpf: '123.456.789-00',
+                    contato: '(85) 98888-1111',
+                    consultor: 'Ana Paula',
+                    hospital: 'Hospital Geral de Fortaleza',
+                    status: 'Em Análise',
+                    dataPrevista: '2026-11-05',
+                    prontuarios: 'Prontuário cardiológico preliminar'
+                },
+                {
+                    nome: 'Juliana Ferreira Santos',
+                    cpf: '987.654.321-11',
+                    contato: '(85) 99999-2222',
+                    consultor: 'Marcos Vinícius',
+                    hospital: 'Hospital Messejana',
+                    status: 'Pendente',
+                    dataPrevista: '2026-11-10',
+                    prontuarios: 'Aguardando laudo complementar'
+                }
+            ];
+
+            for (const ex of exemplos) {
+                await fetch("/api/pacientes", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(ex)
+                });
+            }
+            mostrarToast("Exemplos inseridos no SQLite!");
+            await carregarPacientes();
+        }
+
+        function exportarDados() {
+            if (pacientes.length === 0) {
+                mostrarToast("Não há dados para exportar!");
+                return;
+            }
+            let csv = "Nome;CPF;Contato;Consultor;Hospital;Status;Data Prevista;Prontuários\n";
+            pacientes.forEach(p => {
+                csv += `"${p.nome || ''}";"${p.cpf || ''}";"${p.contato || ''}";"${p.consultor || ''}";"${p.hospital || ''}";"${p.status || ''}";"${p.dataPrevista || ''}";"${p.prontuarios || ''}"\n`;
+            });
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.setAttribute("href", url);
+            a.setAttribute("download", "prontuarios_medicos.csv");
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            mostrarToast("Dados exportados!");
+        }
+    </script>
+</body>
+</html>
