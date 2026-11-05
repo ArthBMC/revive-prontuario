@@ -16,7 +16,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/projeto-ewertongay
+            cd ~/revive-prontuario
             git pull origin main
             npm install --omit=dev
             pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js
