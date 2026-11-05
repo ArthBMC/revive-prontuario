@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,13 +11,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Firebase SDKs (v9 Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
         .toast {
             visibility: hidden;
             min-width: 250px;
@@ -32,14 +36,38 @@
             font-size: 14px;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
         }
+
         .toast.show {
             visibility: visible;
             animation: fadein 0.5s, fadeout 0.5s 2.5s;
         }
-        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
-        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+        @keyframes fadein {
+            from {
+                bottom: 0;
+                opacity: 0;
+            }
+
+            to {
+                bottom: 30px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeout {
+            from {
+                bottom: 30px;
+                opacity: 1;
+            }
+
+            to {
+                bottom: 0;
+                opacity: 0;
+            }
+        }
     </style>
 </head>
+
 <body class="bg-slate-50 min-h-screen text-slate-800">
 
     <!-- Toast Notification -->
@@ -57,18 +85,22 @@
                     <p class="text-xs text-slate-400">Gestão de Pacientes e Hospitais</p>
                 </div>
             </div>
-            
+
             <div class="flex items-center gap-3">
-                <span id="sync-status" class="text-xs px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full font-medium flex items-center gap-1.5">
+                <span id="sync-status"
+                    class="text-xs px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full font-medium flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Conectando ao Banco...
                 </span>
-                <button onclick="carregarExemplos()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-4 py-2.5 rounded-lg border border-slate-700 transition flex items-center gap-2 shadow-sm">
+                <button onclick="carregarExemplos()"
+                    class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-4 py-2.5 rounded-lg border border-slate-700 transition flex items-center gap-2 shadow-sm">
                     <i class="fa-solid fa-database text-blue-400"></i> Carregar Exemplos
                 </button>
-                <button onclick="exportarDados()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-4 py-2.5 rounded-lg border border-slate-700 transition flex items-center gap-2 shadow-sm">
+                <button onclick="exportarDados()"
+                    class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-4 py-2.5 rounded-lg border border-slate-700 transition flex items-center gap-2 shadow-sm">
                     <i class="fa-solid fa-file-arrow-down text-emerald-400"></i> Exportar Dados
                 </button>
-                <button onclick="abrirModalPaciente()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow-md shadow-blue-600/20">
+                <button onclick="abrirModalPaciente()"
+                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition flex items-center gap-2 shadow-md shadow-blue-600/20">
                     <i class="fa-solid fa-plus"></i> Novo Paciente
                 </button>
             </div>
@@ -77,7 +109,7 @@
 
     <!-- Main Container -->
     <main class="max-w-7xl mx-auto px-4 py-8">
-        
+
         <!-- Search Filters Card -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
             <div class="flex items-center justify-between mb-4">
@@ -86,8 +118,10 @@
                     <h2>Filtros de Pesquisa</h2>
                 </div>
                 <div class="flex items-center gap-4">
-                    <span id="contador-pacientes" class="text-xs text-slate-500 font-medium">Mostrando 0 de 0 pacientes</span>
-                    <button onclick="limparFiltros()" class="text-xs text-blue-600 hover:text-blue-800 font-medium transition">Limpar Filtros</button>
+                    <span id="contador-pacientes" class="text-xs text-slate-500 font-medium">Mostrando 0 de 0
+                        pacientes</span>
+                    <button onclick="limparFiltros()"
+                        class="text-xs text-blue-600 hover:text-blue-800 font-medium transition">Limpar Filtros</button>
                 </div>
             </div>
 
@@ -96,33 +130,41 @@
                     <label class="block text-xs font-medium text-slate-500 mb-1.5">Nome do Paciente</label>
                     <div class="relative">
                         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
-                        <input type="text" id="filtro-nome" oninput="filtrarPacientes()" placeholder="Buscar por nome..." class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        <input type="text" id="filtro-nome" oninput="filtrarPacientes()"
+                            placeholder="Buscar por nome..."
+                            class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1.5">Consultor Responsável</label>
                     <div class="relative">
                         <i class="fa-solid fa-user-tie absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
-                        <input type="text" id="filtro-consultor" oninput="filtrarPacientes()" placeholder="Nome do consultor..." class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        <input type="text" id="filtro-consultor" oninput="filtrarPacientes()"
+                            placeholder="Nome do consultor..."
+                            class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1.5">CPF do Paciente</label>
                     <div class="relative">
                         <i class="fa-solid fa-id-card absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
-                        <input type="text" id="filtro-cpf" oninput="filtrarPacientes()" placeholder="000.000.000-00" class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        <input type="text" id="filtro-cpf" oninput="filtrarPacientes()" placeholder="000.000.000-00"
+                            class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1.5">Hospital Atendido</label>
                     <div class="relative">
                         <i class="fa-solid fa-hospital absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
-                        <input type="text" id="filtro-hospital" oninput="filtrarPacientes()" placeholder="Nome do hospital..." class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        <input type="text" id="filtro-hospital" oninput="filtrarPacientes()"
+                            placeholder="Nome do hospital..."
+                            class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1.5">Status</label>
-                    <select id="filtro-status" onchange="filtrarPacientes()" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                    <select id="filtro-status" onchange="filtrarPacientes()"
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
                         <option value="">Todos</option>
                         <option value="Pendente">Pendente</option>
                         <option value="Em Análise">Em Análise</option>
@@ -138,7 +180,8 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-50/70 border-b border-slate-200 text-slate-500 text-[11px] font-semibold tracking-wider uppercase">
+                        <tr
+                            class="bg-slate-50/70 border-b border-slate-200 text-slate-500 text-[11px] font-semibold tracking-wider uppercase">
                             <th class="py-4 px-6">Paciente</th>
                             <th class="py-4 px-4">CPF / Contato</th>
                             <th class="py-4 px-4">Consultor</th>
@@ -157,12 +200,15 @@
 
             <!-- Empty State -->
             <div id="estado-vazio" class="py-16 text-center hidden">
-                <div class="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                <div
+                    class="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
                     <i class="fa-solid fa-users text-lg"></i>
                 </div>
                 <h3 class="text-sm font-bold text-slate-700 mb-1">Nenhum paciente encontrado</h3>
-                <p class="text-xs text-slate-400 mb-4">Tente ajustar seus filtros de busca ou cadastre um novo paciente.</p>
-                <button onclick="abrirModalPaciente()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition inline-flex items-center gap-2">
+                <p class="text-xs text-slate-400 mb-4">Tente ajustar seus filtros de busca ou cadastre um novo paciente.
+                </p>
+                <button onclick="abrirModalPaciente()"
+                    class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition inline-flex items-center gap-2">
                     <i class="fa-solid fa-plus"></i> Cadastrar Paciente
                 </button>
             </div>
@@ -170,42 +216,50 @@
     </main>
 
     <!-- Modal Novo/Editar Paciente -->
-    <div id="modal-paciente" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div id="modal-paciente"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden border border-slate-200">
             <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
                 <h3 id="modal-titulo" class="font-bold text-sm">Cadastrar Novo Paciente</h3>
-                <button onclick="fecharModalPaciente()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="fecharModalPaciente()" class="text-slate-400 hover:text-white transition"><i
+                        class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="form-paciente" onsubmit="salvarPaciente(event)" class="p-6 space-y-4">
                 <input type="hidden" id="paciente-id">
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Nome do Paciente *</label>
-                    <input type="text" id="inp-nome" required placeholder="Ex: Maria Oliveira" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    <input type="text" id="inp-nome" required placeholder="Ex: Maria Oliveira"
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">CPF *</label>
-                        <input type="text" id="inp-cpf" required placeholder="000.000.000-00" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        <input type="text" id="inp-cpf" required placeholder="000.000.000-00"
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Contato / Telefone</label>
-                        <input type="text" id="inp-contato" placeholder="(00) 90000-0000" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        <input type="text" id="inp-contato" placeholder="(00) 90000-0000"
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Consultor Responsável *</label>
-                        <input type="text" id="inp-consultor" required placeholder="Nome do consultor" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        <input type="text" id="inp-consultor" required placeholder="Nome do consultor"
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Hospital Atendido *</label>
-                        <input type="text" id="inp-hospital" required placeholder="Nome do hospital" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        <input type="text" id="inp-hospital" required placeholder="Nome do hospital"
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Status</label>
-                        <select id="inp-status" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        <select id="inp-status"
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                             <option value="Pendente">Pendente</option>
                             <option value="Em Análise">Em Análise</option>
                             <option value="Concluído">Concluído</option>
@@ -214,23 +268,30 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Data Prev. de Chegada</label>
-                        <input type="date" id="inp-data-prevista" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                        <input type="date" id="inp-data-prevista"
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Prontuários / Observações / Anexos</label>
-                    <textarea id="inp-prontuarios" rows="3" placeholder="Detalhes ou links dos prontuários..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"></textarea>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Prontuários / Observações /
+                        Anexos</label>
+                    <textarea id="inp-prontuarios" rows="3" placeholder="Detalhes ou links dos prontuários..."
+                        class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"></textarea>
                 </div>
                 <div class="flex justify-end gap-3 pt-3">
-                    <button type="button" onclick="fecharModalPaciente()" class="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 transition">Cancelar</button>
-                    <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-500 transition shadow-md shadow-blue-600/20">Salvar no Banco</button>
+                    <button type="button" onclick="fecharModalPaciente()"
+                        class="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 transition">Cancelar</button>
+                    <button type="submit"
+                        class="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-500 transition shadow-md shadow-blue-600/20">Salvar
+                        no Banco</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Modal Exclusão -->
-    <div id="modal-excluir" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div id="modal-excluir"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center border border-slate-200">
             <div class="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-3">
                 <i class="fa-solid fa-triangle-exclamation text-lg"></i>
@@ -239,8 +300,11 @@
             <p class="text-xs text-slate-500 mb-5">Tem certeza de que deseja remover este registo do banco de dados?</p>
             <input type="hidden" id="excluir-id">
             <div class="flex gap-3">
-                <button onclick="fecharModalExcluir()" class="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 transition">Cancelar</button>
-                <button onclick="confirmarExclusao()" class="flex-1 px-4 py-2.5 bg-rose-600 text-white rounded-xl text-xs font-semibold hover:bg-rose-500 transition shadow-md shadow-rose-600/20">Sim, Excluir</button>
+                <button onclick="fecharModalExcluir()"
+                    class="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-xs font-semibold hover:bg-slate-50 transition">Cancelar</button>
+                <button onclick="confirmarExclusao()"
+                    class="flex-1 px-4 py-2.5 bg-rose-600 text-white rounded-xl text-xs font-semibold hover:bg-rose-500 transition shadow-md shadow-rose-600/20">Sim,
+                    Excluir</button>
             </div>
         </div>
     </div>
@@ -277,7 +341,7 @@
                 snapshot.forEach((doc) => {
                     pacientes.push({ id: doc.id, ...doc.data() });
                 });
-                
+
                 // Atualiza indicador visual para "Sincronizado"
                 const syncStatus = document.getElementById("sync-status");
                 syncStatus.className = "text-xs px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full font-medium flex items-center gap-1.5";
@@ -303,7 +367,7 @@
             const tbody = document.getElementById("tabela-corpo");
             const estadoVazio = document.getElementById("estado-vazio");
             const contador = document.getElementById("contador-pacientes");
-            
+
             tbody.innerHTML = "";
             contador.textContent = `Mostrando ${lista.length} de ${pacientes.length} pacientes`;
 
@@ -511,4 +575,5 @@
         }
     </script>
 </body>
+
 </html>
